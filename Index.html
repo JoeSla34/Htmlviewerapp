@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Code Viewer with Line Numbers, Copy & Live Preview</title>
+<style>
+  body {
+    font-family: monospace, monospace;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    margin: 0; padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-sizing: border-box;
+  }
+  h2 {
+    margin: 0 0 10px 0;
+  }
+  #main {
+    display: flex;
+    flex: 1;
+    gap: 10px;
+    max-width: 100%;
+  }
+  #container {
+    display: flex;
+    border: 1px solid #444;
+    flex: 1;
+    height: 100%;
+    max-width: 50%;
+    min-width: 300px;
+  }
+  #lineNumbers {
+    background: #2d2d2d;
+    color: #858585;
+    padding: 10px 8px;
+    text-align: right;
+    user-select: none;
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.4em;
+    border-right: 1px solid #444;
+    width: 40px;
+  }
+  #codeArea {
+    flex: 1;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 14px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    border: none;
+    outline: none;
+    resize: none;
+    line-height: 1.4em;
+    overflow: auto;
+  }
+  #preview {
+    flex: 1;
+    border: 1px solid #444;
+    background: white;
+    height: 100%;
+  }
+  #controls {
+    margin-top: 10px;
+    max-width: 800px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h2>Code Viewer with Line Numbers, Copy & Live Preview</h2>
+
+<div id="main">
+  <div id="container">
+    <pre id="lineNumbers"></pre>
+    <textarea id="codeArea" spellcheck="false" wrap="off"></textarea>
+  </div>
+  <iframe id="preview" sandbox="allow-scripts allow-same-origin"></iframe>
+</div>
+
+<div id="controls">
+  <button id="toggleLinesBtn">Show Line Numbers</button>
+  <button id="copyBtn">Copy Code</button>
+  <button id="clearBtn">Clear Code</button>
+</div>
+
+<script>
+  const codeArea = document.getElementById('codeArea');
+  const lineNumbers = document.getElementById('lineNumbers');
+  const toggleBtn = document.getElementById('toggleLinesBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const preview = document.getElementById('preview');
+
+  let showLineNumbers = false;
+
+  // Initial sample HTML code
+  codeArea.value = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Preview</title>
+</head>
+<body>
+  <h1>Hello, world!</h1>
+  <p>This is a live preview.</p>
+</body>
+</html>`;
+
+  function updateLineNumbers() {
+    const lines = codeArea.value.split('\n').length;
+    let numbers = '';
+    for (let i = 1; i <= lines; i++) {
+      numbers += i + '\n';
+    }
+    lineNumbers.textContent = numbers;
+  }
+
+  function updatePreview() {
+    const code = codeArea.value;
+    // Use srcdoc for live preview safely
+    preview.srcdoc = code;
+  }
+
+  // Sync scroll for line numbers
+  codeArea.addEventListener('scroll', () => {
+    lineNumbers.scrollTop = codeArea.scrollTop;
+  });
+
+  // Update line numbers and preview on input
+  codeArea.addEventListener('input', () => {
+    if (showLineNumbers) updateLineNumbers();
+    updatePreview();
+  });
+
+  // Toggle line numbers on/off
+  toggleBtn.addEventListener('click', () => {
+    showLineNumbers = !showLineNumbers;
+    if (showLineNumbers) {
+      updateLineNumbers();
+      lineNumbers.style.display = 'block';
+      toggleBtn.textContent = 'Hide Line Numbers';
+    } else {
+      lineNumbers.style.display = 'none';
+      toggleBtn.textContent = 'Show Line Numbers';
+    }
+  });
+
+  // Copy code with or without line numbers
+  copyBtn.addEventListener('click', () => {
+    let textToCopy = '';
+    if (showLineNumbers) {
+      const codeLines = codeArea.value.split('\n');
+      for (let i = 0; i < codeLines.length; i++) {
+        textToCopy += (i + 1) + ' ' + codeLines[i] + '\n';
+      }
+    } else {
+      textToCopy = codeArea.value;
+    }
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      alert('Code copied to clipboard!');
+    }).catch(err => {
+      alert('Failed to copy: ' + err);
+    });
+  });
+
+  // Clear code area and line numbers
+  clearBtn.addEventListener('click', () => {
+    codeArea.value = '';
+    if (showLineNumbers) updateLineNumbers();
+    updatePreview();
+  });
+
+  // Start with line numbers off and update preview with initial code
+  lineNumbers.style.display = 'none';
+  updatePreview();
+</script>
+
+</body>
+</html>
